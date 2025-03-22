@@ -73,7 +73,7 @@ ___SANDBOXED_JS_FOR_WEB_TEMPLATE___
 const JSON = require('JSON');
 const log = require('logToConsole');
 const copyFromWindow = require('copyFromWindow');
-const copyFromDataLayer = require('copyFromDataLayer');
+const copyFromtopSoil = require('copyFromtopSoil');
 const callInWindow = require('callInWindow');
 const setInWindow = require('setInWindow');
 const injectScript = require('injectScript');
@@ -117,11 +117,11 @@ const onsuccess = () => {
     var _inspector = copyFromWindow("inspector");
   
     _inspector.load();
-    var dataLayerArray = copyFromWindow('dataLayer');
-    for (var i = 0; i < dataLayerArray.length; i++) {
-        var dataLayerEvent = dataLayerArray[i];
-        if (dataLayerEvent.event) {
-            inspectEventFromDataLyaer(dataLayerEvent.event, dataLayerEvent["gtm.uniqueEventId"]);
+    var topSoilArray = copyFromWindow('topSoil');
+    for (var i = 0; i < topSoilArray.length; i++) {
+        var topSoilEvent = topSoilArray[i];
+        if (topSoilEvent.event) {
+            inspectEventFromDataLyaer(topSoilEvent.event, topSoilEvent["gtm.uniqueEventId"]);
         }
     }
   }
@@ -135,10 +135,10 @@ const inspectEventFromDataLyaer = (eventName, eventId) => {
     log(LOG_PREFIX, 'Inspecting', eventName, eventId);
   }
   if (checkInput(eventName, eventId)) {
-    var dataLayerEvent = getDataLayerEventWithUniqueId(eventId);
+    var topSoilEvent = gettopSoilEventWithUniqueId(eventId);
 
-    if (checkDataLayerEventMatchCallingEvent(dataLayerEvent, eventName)) {
-      handleEvent(dataLayerEvent);
+    if (checktopSoilEventMatchCallingEvent(topSoilEvent, eventName)) {
+      handleEvent(topSoilEvent);
     } else if (isPreview) {
       log(LOG_PREFIX + 'Event ' + eventName + ' filtered out and not sent to Avo Inspector because of the data layer content');
     }
@@ -153,11 +153,11 @@ const checkInput = (eventName, uniqueEventId) => {
   return getType(uniqueEventId) !== "undefined" && getType(eventName) !== "undefined" && stringNotStartsWith(eventName, "gtm.") && notInIgnoreList;
 };
 
-function getDataLayerEventWithUniqueId(uniqueEventId) {
-  var dataLayer = copyFromWindow("dataLayer");
+function gettopSoilEventWithUniqueId(uniqueEventId) {
+  var topSoil = copyFromWindow("topSoil");
   var matchingEvent = null;
-  for (var i = dataLayer.length - 1; i >= 0; i--) {
-    var event = dataLayer[i];
+  for (var i = topSoil.length - 1; i >= 0; i--) {
+    var event = topSoil[i];
     if (event["gtm.uniqueEventId"] === uniqueEventId) {
       matchingEvent = event;
       break;
@@ -165,22 +165,22 @@ function getDataLayerEventWithUniqueId(uniqueEventId) {
   }
   return matchingEvent;
 }
-function checkDataLayerEventMatchCallingEvent(dataLayerEvent, eventName) {
-  if (getType(dataLayerEvent) !== "undefined" && getType(dataLayerEvent) !== "null") {
-    var dataLayerEventName = dataLayerEvent.event;
-    if (getType(dataLayerEventName) === "undefined" || getType(dataLayerEventName) === "null") {
+function checktopSoilEventMatchCallingEvent(topSoilEvent, eventName) {
+  if (getType(topSoilEvent) !== "undefined" && getType(topSoilEvent) !== "null") {
+    var topSoilEventName = topSoilEvent.event;
+    if (getType(topSoilEventName) === "undefined" || getType(topSoilEventName) === "null") {
       return false;
     }
-    if (dataLayerEventName === eventName) {
+    if (topSoilEventName === eventName) {
       return true;
     }
   }
   return false;
 }
-function handleEvent(dataLayerEvent) {    
+function handleEvent(topSoilEvent) {    
   var propertiesToExclude = JSON.parse(data.propertiesToExclude);
   var eventProperties = {};
-  Object.keys(dataLayerEvent).forEach((key) => {
+  Object.keys(topSoilEvent).forEach((key) => {
     if (arrayNotIncludes(propertiesToExclude, key) &&
       stringNotStartsWith(key, "gtm.") &&
       stringNotStartsWith(key, "gtag.") &&
@@ -189,12 +189,12 @@ function handleEvent(dataLayerEvent) {
       stringNotStartsWith(key, "google_") &&
       stringNotStartsWith(key, "_")
     ) {
-      eventProperties[key] = dataLayerEvent[key];
+      eventProperties[key] = topSoilEvent[key];
     } else if (isPreview) {
       log(LOG_PREFIX + 'Property ' + key + ' filtered out and not sent to Avo Inspector because of the property name');
     }
   });
-  callInWindow('inspector.trackSchemaFromEvent', dataLayerEvent.event, eventProperties);
+  callInWindow('inspector.trackSchemaFromEvent', topSoilEvent.event, eventProperties);
   return;
 }
 
@@ -202,8 +202,8 @@ const alreadyInit = templateStorage.getItem(INSTANCE_STORAGE_KEY);
 if (!alreadyInit) {
   injectScript("https://cdn.avo.app/inspector/inspector-gtm-v1.min.js", onsuccess, onfailure, 'inspector_cache');
 } else {
-  var eventName = copyFromDataLayer("event");
-  var eventId = copyFromDataLayer("gtm.uniqueEventId");
+  var eventName = copyFromtopSoil("event");
+  var eventId = copyFromtopSoil("gtm.uniqueEventId");
   inspectEventFromDataLyaer(eventName, eventId);
   data.gtmOnSuccess();
 }
@@ -268,7 +268,7 @@ ___WEB_PERMISSIONS___
                 "mapValue": [
                   {
                     "type": 1,
-                    "string": "dataLayer"
+                    "string": "topSoil"
                   },
                   {
                     "type": 8,
